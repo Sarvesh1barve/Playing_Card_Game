@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="Maharashtra Cards Hub">
+  <rect width="192" height="192" rx="42" fill="#090d16"/>
+  <circle cx="96" cy="96" r="68" fill="#d6a84b" opacity="0.2"/>
+  <rect x="68" y="34" width="62" height="92" rx="12" fill="#f6e9c7" transform="rotate(10 99 80)"/>
+  <rect x="56" y="52" width="62" height="92" rx="12" fill="#b6252f" transform="rotate(-10 87 98)"/>
+  <text x="87" y="110" text-anchor="middle" font-size="48" font-family="Arial, sans-serif" font-weight="800" fill="#f6e9c7">M</text>
+</svg>
