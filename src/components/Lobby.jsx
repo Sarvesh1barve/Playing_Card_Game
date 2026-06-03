@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import ChatPanel from './ChatPanel.jsx'
+import AvatarBadge from './AvatarBadge.jsx'
+import InviteShare from './InviteShare.jsx'
 
 function Lobby({
   copy,
@@ -13,6 +15,7 @@ function Lobby({
   onGameChange,
   onReadyChange,
   onSendMessage,
+  onInviteCopied,
   onStart,
 }) {
   const [shareStatus, setShareStatus] = useState('')
@@ -22,14 +25,21 @@ function Lobby({
   const canStart = players.length >= minimumPlayers
 
   async function shareRoom() {
-    const link = `${window.location.origin}${window.location.pathname}#/room/${roomCode}`
+    const link = `${window.location.origin}/join/${roomCode}`
 
     try {
       await navigator.clipboard.writeText(link)
       setShareStatus('Copied')
+      onInviteCopied?.('Invite copied', link)
     } catch {
       setShareStatus(link)
+      onInviteCopied?.('Copy manually', link)
     }
+  }
+
+  function getGameLabel(gameId) {
+    const game = games.find((item) => item.id === gameId)
+    return game ? game.name[language] : 'Cards'
   }
 
   return (
@@ -52,13 +62,16 @@ function Lobby({
           <div className="player-list">
             {players.map((player) => (
               <div className="player-card" key={player.id}>
-                <span className="avatar">{player.name.slice(0, 1).toUpperCase()}</span>
+                <AvatarBadge avatarId={player.avatar} name={player.name} />
                 <span>
                   <strong>{player.name}</strong>
-                  <small>
+                  <small className="player-meta-line">
                     {player.role === 'host' && <b className="host-badge">{copy.lobby.host}</b>}
-                    {player.role !== 'host' && 'Guest'}
+                    <b className={player.online ? 'online-badge' : 'offline-badge'}>
+                      {player.online ? 'Online' : 'Offline'}
+                    </b>
                   </small>
+                  <small>Fav: {getGameLabel(player.favoriteGame)}</small>
                 </span>
                 <b className={player.ready ? 'ready-dot ready' : 'ready-dot'}>
                   {player.ready ? copy.actions.ready : copy.actions.notReady}
@@ -68,6 +81,7 @@ function Lobby({
           </div>
 
           {shareStatus && <p className="form-status">{shareStatus}</p>}
+          <InviteShare roomCode={roomCode} onInviteCopied={onInviteCopied} />
         </section>
 
         <section className="lobby-panel">

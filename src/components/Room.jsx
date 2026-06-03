@@ -1,7 +1,10 @@
 import { useMemo, useState } from 'react'
+import InviteShare from './InviteShare.jsx'
 
 function readRoomFromHash() {
-  const match = window.location.hash.match(/#\/room\/([A-Za-z0-9]+)/)
+  const hashMatch = window.location.hash.match(/#\/(?:room|join)\/([A-Za-z0-9]+)/)
+  const pathMatch = window.location.pathname.match(/\/join\/([A-Za-z0-9]+)/)
+  const match = hashMatch || pathMatch
   return match ? match[1].toUpperCase().slice(0, 6) : ''
 }
 
@@ -14,6 +17,7 @@ function Room({
   isValidRoomCode,
   onCreateRoomCode,
   onEnterLobby,
+  onInviteCopied,
 }) {
   const [nameInput, setNameInput] = useState(playerName)
   const [joinCode, setJoinCode] = useState(readRoomFromHash() || roomCode || '')
@@ -54,13 +58,15 @@ function Room({
 
   async function shareRoom() {
     const code = isValidRoomCode(shareCode) ? shareCode : onCreateRoomCode()
-    const link = `${window.location.origin}${window.location.pathname}#/room/${code}`
+    const link = `${window.location.origin}/join/${code}`
 
     try {
       await navigator.clipboard.writeText(link)
       setStatus(`Room link copied: ${code}`)
+      onInviteCopied?.('Invite copied', link)
     } catch {
       setStatus(link)
+      onInviteCopied?.('Copy manually', link)
     }
   }
 
@@ -119,6 +125,8 @@ function Room({
             {copy.actions.shareRoom}
           </button>
         </div>
+
+        <InviteShare roomCode={shareCode} onInviteCopied={onInviteCopied} />
 
         {status && <p className="form-status">{status}</p>}
       </form>

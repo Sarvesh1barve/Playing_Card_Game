@@ -1,8 +1,23 @@
-function Header({ copy, language, screen, theme, onNavigate, onLanguageChange, onThemeChange }) {
+import NotificationCenter from './NotificationCenter.jsx'
+
+function Header({
+  copy,
+  language,
+  screen,
+  theme,
+  notifications,
+  onNavigate,
+  onLanguageChange,
+  onThemeChange,
+  onMarkAllNotificationsRead,
+}) {
   const navItems = [
     { id: 'home', label: copy.nav.home },
     { id: 'guides', label: copy.nav.guides },
     { id: 'room', label: copy.nav.room },
+    { id: 'profile', label: 'Profile' },
+    { id: 'leaderboard', label: 'Leaderboard' },
+    { id: 'achievements', label: 'Achievements' },
     { id: 'install', label: copy.nav.install },
   ]
 
@@ -19,7 +34,7 @@ function Header({ copy, language, screen, theme, onNavigate, onLanguageChange, o
       <nav className="top-nav" aria-label="Primary navigation">
         {navItems.map((item) => (
           <button
-            className={screen === item.id ? 'nav-button active' : 'nav-button'}
+            className={screen === item.id || (screen === 'join' && item.id === 'room') ? 'nav-button active' : 'nav-button'}
             type="button"
             key={item.id}
             onClick={() => onNavigate(item.id)}
@@ -30,6 +45,10 @@ function Header({ copy, language, screen, theme, onNavigate, onLanguageChange, o
       </nav>
 
       <div className="header-actions">
+        <NotificationCenter
+          notifications={notifications}
+          onMarkAllRead={onMarkAllNotificationsRead}
+        />
         <button
           className="chip-button"
           type="button"

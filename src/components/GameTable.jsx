@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Card from './Card.jsx'
 import ChatPanel from './ChatPanel.jsx'
+import AvatarBadge from './AvatarBadge.jsx'
 
 const hand = [
   { symbol: '🂡', label: 'Ace of Spades' },
@@ -15,6 +16,8 @@ const reactions = ['👏', '😂', '🔥', '🙏', '😮']
 // TODO: WebRTC signalling
 // TODO: Camera/mic real stream
 // TODO: STUN/TURN server
+// TODO: WebRTC Video
+// TODO: WebRTC Audio
 function GameTable({ copy, language, playerName, roomCode, roomData, selectedGame, onSendMessage, onLeave }) {
   const [cameraOn, setCameraOn] = useState(false)
   const [muted, setMuted] = useState(true)
@@ -28,6 +31,7 @@ function GameTable({ copy, language, playerName, roomCode, roomData, selectedGam
       name: `Guest ${index + 1}`,
       role: 'guest',
       ready: false,
+      avatar: 'ace-card',
     })),
   ].slice(0, 6)
   const currentTurn = seats[0]?.name || playerName || 'You'
@@ -59,6 +63,7 @@ function GameTable({ copy, language, playerName, roomCode, roomData, selectedGam
           <div className="green-table" aria-label="Virtual green card table">
             {seats.slice(0, 6).map((seat, index) => (
               <span className={`seat seat-${index + 1}`} key={seat.id || seat.name}>
+                <AvatarBadge avatarId={seat.avatar} name={seat.name} size="sm" />
                 <b>{seat.name}</b>
                 <small>{index === 0 ? copy.labels.currentTurn : 'Waiting'}</small>
               </span>
@@ -99,7 +104,7 @@ function GameTable({ copy, language, playerName, roomCode, roomData, selectedGam
             <div className="video-grid">
               {seats.map((seat, index) => (
                 <div className="video-tile" key={seat.id || seat.name}>
-                  <span>{seat.name.slice(0, 1).toUpperCase()}</span>
+                  <AvatarBadge avatarId={seat.avatar} name={seat.name} />
                   <strong>{seat.name}</strong>
                   <small>{index === 0 && cameraOn ? 'Camera preview' : 'Video placeholder'}</small>
                 </div>

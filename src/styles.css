@@ -139,8 +139,14 @@ button:disabled {
   gap: 10px;
 }
 
+.top-nav {
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
 .nav-button,
 .chip-button,
+.chip-link,
 .secondary-button,
 .wide-ghost-button {
   border: 1px solid var(--line);
@@ -174,6 +180,104 @@ button:disabled {
   padding: 0 12px;
   font-size: 0.86rem;
   font-weight: 800;
+}
+
+.chip-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 12px;
+  color: var(--text);
+  font-size: 0.86rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.chip-link:hover {
+  border-color: rgba(214, 168, 75, 0.58);
+}
+
+.notification-center {
+  position: relative;
+}
+
+.notification-button {
+  position: relative;
+  gap: 6px;
+}
+
+.notification-button span {
+  display: grid;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--red);
+  color: #fff4d8;
+  font-size: 0.7rem;
+  place-items: center;
+}
+
+.notification-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 20;
+  width: min(340px, calc(100vw - 28px));
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: #0c121f;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.42);
+}
+
+.notification-head,
+.notification-item,
+.chat-message-head,
+.player-meta-line,
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.notification-head {
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.tiny-link {
+  border: 0;
+  background: transparent;
+  color: var(--gold);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.notification-list {
+  display: grid;
+  max-height: 320px;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  align-items: flex-start;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.notification-item.read {
+  opacity: 0.68;
+}
+
+.notification-item p,
+.notification-item time {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
 }
 
 .screen-shell {
@@ -317,7 +421,11 @@ h3 {
 .room-panel,
 .lobby-panel,
 .side-panel,
-.install-panel {
+.install-panel,
+.profile-form,
+.profile-card-large,
+.leaderboard-panel,
+.achievement-card {
   padding: clamp(18px, 4vw, 28px);
 }
 
@@ -504,6 +612,32 @@ button:focus-visible {
   padding-top: 18px;
 }
 
+.invite-share {
+  display: grid;
+  gap: 12px;
+  border: 1px solid rgba(214, 168, 75, 0.28);
+  border-radius: 8px;
+  padding: 14px;
+  background: rgba(214, 168, 75, 0.07);
+}
+
+.invite-share span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.invite-share strong {
+  overflow-wrap: anywhere;
+}
+
+.invite-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .form-status {
   margin-bottom: 0;
   color: var(--gold);
@@ -541,6 +675,38 @@ button:focus-visible {
   place-items: center;
 }
 
+.avatar-badge {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  border: 1px solid color-mix(in srgb, var(--avatar-accent), white 20%);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.28), transparent 34%),
+    color-mix(in srgb, var(--avatar-accent), #090d16 62%);
+  font-size: 1.3rem;
+  place-items: center;
+}
+
+.avatar-sm {
+  width: 30px;
+  height: 30px;
+  font-size: 0.95rem;
+}
+
+.avatar-lg {
+  width: 58px;
+  height: 58px;
+  font-size: 1.7rem;
+}
+
+.avatar-xl {
+  width: clamp(96px, 20vw, 150px);
+  height: clamp(96px, 20vw, 150px);
+  font-size: clamp(3rem, 9vw, 5rem);
+}
+
 .player-card strong,
 .player-card small {
   display: block;
@@ -550,6 +716,12 @@ button:focus-visible {
   color: var(--muted);
 }
 
+.player-meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .host-badge {
   display: inline-flex;
   border-radius: 999px;
@@ -557,6 +729,24 @@ button:focus-visible {
   background: rgba(214, 168, 75, 0.16);
   color: var(--gold);
   font-size: 0.7rem;
+}
+
+.online-badge,
+.offline-badge {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 3px 7px;
+  font-size: 0.7rem;
+}
+
+.online-badge {
+  background: rgba(15, 91, 60, 0.7);
+  color: #dffce8;
+}
+
+.offline-badge {
+  background: rgba(182, 37, 47, 0.22);
+  color: #ffd9d9;
 }
 
 .ready-dot {
@@ -623,6 +813,11 @@ button:focus-visible {
   background: rgba(255, 255, 255, 0.045);
 }
 
+.chat-message-head {
+  align-items: flex-start;
+  margin-bottom: 6px;
+}
+
 .chat-message.system {
   border-color: rgba(214, 168, 75, 0.28);
   background: rgba(214, 168, 75, 0.08);
@@ -630,10 +825,11 @@ button:focus-visible {
 
 .chat-meta {
   display: flex;
+  min-width: 0;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 4px;
+  flex: 1;
 }
 
 .chat-meta strong {
@@ -650,6 +846,172 @@ button:focus-visible {
   margin: 0;
   color: var(--text);
   line-height: 1.45;
+}
+
+.profile-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.profile-card-large,
+.profile-form,
+.leaderboard-panel,
+.achievement-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.025));
+}
+
+.profile-card-large {
+  display: grid;
+  gap: 22px;
+  align-items: center;
+}
+
+.profile-card-large h2 {
+  margin-bottom: 4px;
+}
+
+.profile-nickname {
+  color: var(--gold);
+  font-weight: 900;
+}
+
+.profile-details {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 0;
+}
+
+.profile-details div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 10px;
+}
+
+.profile-details dt {
+  color: var(--muted);
+}
+
+.profile-details dd {
+  margin: 0;
+  font-weight: 900;
+  text-align: right;
+}
+
+.profile-form {
+  display: grid;
+  gap: 22px;
+}
+
+.profile-form-grid,
+.avatar-grid,
+.achievements-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.avatar-gallery h2 {
+  margin-bottom: 14px;
+}
+
+.avatar-grid {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.avatar-option {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  min-height: 132px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font-weight: 900;
+  text-align: center;
+}
+
+.avatar-option.selected {
+  border-color: rgba(214, 168, 75, 0.75);
+  background: rgba(214, 168, 75, 0.12);
+}
+
+.form-actions {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.tab-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tab-button {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0 16px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.tab-button.active {
+  border-color: rgba(214, 168, 75, 0.7);
+  background: rgba(214, 168, 75, 0.12);
+  color: var(--text);
+}
+
+.leaderboard-panel {
+  overflow-x: auto;
+}
+
+.leaderboard-panel table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+}
+
+.leaderboard-panel th,
+.leaderboard-panel td {
+  border-bottom: 1px solid var(--line);
+  padding: 12px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.leaderboard-panel th {
+  color: var(--gold);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+}
+
+.leaderboard-panel .local-row {
+  background: rgba(214, 168, 75, 0.08);
+}
+
+.achievements-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.achievement-card {
+  display: grid;
+  gap: 14px;
+}
+
+.achievement-card.unlocked {
+  border-color: rgba(214, 168, 75, 0.55);
+}
+
+.achievement-icon {
+  font-size: 2.4rem;
 }
 
 .emoji-row,
@@ -904,7 +1266,7 @@ button:focus-visible {
   text-align: center;
 }
 
-.video-tile span {
+.video-tile > span:not(.avatar-badge) {
   display: grid;
   width: 38px;
   height: 38px;
@@ -975,8 +1337,20 @@ button:focus-visible {
 
   .table-heading,
   .share-strip,
-  .panel-title-row {
+  .panel-title-row,
+  .profile-heading,
+  .form-actions {
     align-items: stretch;
+    flex-direction: column;
+  }
+
+  .notification-menu {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .chat-form {
     flex-direction: column;
   }
 
@@ -1002,7 +1376,9 @@ button:focus-visible {
   }
 
   .room-actions-grid,
-  .install-grid {
+  .install-grid,
+  .profile-form-grid,
+  .profile-card-large {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 

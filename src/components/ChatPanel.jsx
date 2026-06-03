@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import AvatarBadge from './AvatarBadge.jsx'
 
 const emojis = ['🙂', '😂', '👏', '🔥', '🙏', '🎉']
 
@@ -40,9 +41,12 @@ function ChatPanel({ title, messages, playerName, onSendMessage, compact = false
       <div className="chat-scroll" ref={scrollRef}>
         {messages.map((message) => (
           <article className={message.system ? 'chat-message system' : 'chat-message'} key={message.id}>
-            <div className="chat-meta">
-              <strong>{message.playerName}</strong>
-              <time dateTime={message.timestamp}>{formatTime(message.timestamp)}</time>
+            <div className="chat-message-head">
+              <AvatarBadge avatarId={message.avatar || 'ace-card'} name={message.playerName} size="sm" />
+              <div className="chat-meta">
+                <strong>{message.playerName}</strong>
+                <time dateTime={message.timestamp}>{formatTime(message.timestamp)}</time>
+              </div>
             </div>
             <p>{message.text}</p>
           </article>

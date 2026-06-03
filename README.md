@@ -2,7 +2,7 @@
 
 Maharashtra Cards Hub / महाराष्ट्र कार्ड्स हब is a frontend-only React + Vite + PWA for private family and friends playing-card rooms.
 
-This phase is intentionally static and deployable. It uses React state, hash-based navigation, plain CSS, localStorage, a PWA manifest, install icons, and a lightweight service worker. It does not include Supabase, Firebase, payments, wallets, gambling, betting, or real WebRTC yet.
+This phase is intentionally static and deployable. It uses React state, hash-based navigation, clean invite routes, plain CSS, localStorage, a PWA manifest, install icons, and a lightweight service worker. It does not include Supabase, Firebase, payments, wallets, gambling, betting, or real WebRTC yet.
 
 ## Local Run
 
@@ -67,7 +67,7 @@ Deployment options:
 4. Keep the Vite defaults, or confirm the settings above.
 5. Deploy.
 
-This app uses hash routes like `#/lobby` and `#/table`, so it works as a static frontend without server rewrite rules.
+Most app navigation uses hash routes like `#/lobby` and `#/table`. Friend invite links also support clean paths like `/join/ABC123`; `vercel.json` rewrites those paths back to `index.html` for static deployment.
 
 ## Current Features
 
@@ -75,13 +75,18 @@ This app uses hash routes like `#/lobby` and `#/table`, so it works as a static 
 - English/Marathi language toggle
 - Midnight/Royal dark theme toggle
 - PWA manifest, install icons, service worker, and install guide
-- localStorage for player name, language, theme, last room, and mock room data
+- localStorage for player name, player profile, language, theme, last room, mock room data, achievements, and notifications
+- Profile page, view profile page, and edit profile page
+- Built-in avatar gallery: Maharaja, Warrior, Tiger, Eagle, Lion, Playing Card King, Playing Card Queen, Ace Card, Traditional Marathi Theme, and Modern Gamer
 - Create and join private rooms with 6-character room codes
-- Share room link button
-- Lobby with player cards, host badge, ready toggle, selected game, and start gating
-- Local-state chat simulation with player names, timestamps, emoji support, and auto-scroll
+- Invite sharing UI with `/join/ROOMCODE` links, copy, WhatsApp, Telegram, and native share support
+- Lobby with player cards, avatars, host badge, ready badge, online badge, favorite game, selected game, and start gating
+- Local-state chat simulation with avatars, player names, timestamps, emoji support, and auto-scroll
+- Mock leaderboard page with Daily, Weekly, and Monthly tabs
+- Mock achievements page with locally stored unlocked achievements
+- Notification center with local mock notifications
 - Game guides for Rummy, Mendicot, 304, Challenge, Teen Patti, Call Break, 29, and Court Piece
-- Virtual green card table with seats, sample deck, sample hand, scoreboard, turn indicator, reactions, chat, and video placeholders
+- Virtual green card table with avatar seats, sample deck, sample hand, scoreboard, turn indicator, reactions, chat, and video placeholders
 - Camera, mute, and leave-room UI controls without real camera access
 
 ## Important Disclaimer
@@ -94,10 +99,12 @@ Do not add Supabase until the frontend deployment is stable. When ready, the lik
 
 1. Add Supabase project and environment variables in Vercel.
 2. Add Supabase Auth for private family/friends sign-in.
-3. Replace localStorage room data with Supabase tables.
-4. Add Supabase Realtime for rooms, player presence, chat messages, ready state, selected game, and game state sync.
-5. Add row-level security policies before inviting real users.
-6. Keep localStorage only for device preferences such as language, theme, and last used player name.
+3. Add a friends database for profiles, friend invites, and blocked/private lists.
+4. Replace localStorage room data with Supabase tables.
+5. Add Supabase Presence for online player state.
+6. Add Supabase Realtime for rooms, player presence, chat sync, ready state, selected game, and game state sync.
+7. Add row-level security policies before inviting real users.
+8. Keep localStorage only for device preferences such as language, theme, and last used player name.
 
 ## Future WebRTC Notes
 
