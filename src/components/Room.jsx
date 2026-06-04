@@ -22,24 +22,30 @@ function Room({
   const [nameInput, setNameInput] = useState(playerName)
   const [joinCode, setJoinCode] = useState(readRoomFromHash() || roomCode || '')
   const [status, setStatus] = useState('')
+  const [submitting, setSubmitting] = useState(false)
   const shareCode = useMemo(() => joinCode.trim().toUpperCase() || roomCode, [joinCode, roomCode])
 
   function cleanName() {
     return nameInput.trim() || 'Guest'
   }
 
-  function createRoom() {
+  async function createRoom() {
     const code = onCreateRoomCode()
     setPlayerName(cleanName())
     setJoinCode(code)
-    const result = onEnterLobby({ playerName: cleanName(), roomCode: code, mode: 'create' })
+    setStatus('')
+    setSubmitting(true)
+
+    const result = await onEnterLobby({ playerName: cleanName(), roomCode: code, mode: 'create' })
 
     if (!result?.ok) {
       setStatus(result?.message || 'Could not create room.')
     }
+
+    setSubmitting(false)
   }
 
-  function joinRoom(event) {
+  async function joinRoom(event) {
     event.preventDefault()
     const code = joinCode.trim().toUpperCase()
 
@@ -49,11 +55,15 @@ function Room({
     }
 
     setPlayerName(cleanName())
-    const result = onEnterLobby({ playerName: cleanName(), roomCode: code, mode: 'join' })
+    setStatus('')
+    setSubmitting(true)
+    const result = await onEnterLobby({ playerName: cleanName(), roomCode: code, mode: 'join' })
 
     if (!result?.ok) {
       setStatus(result?.message || 'Could not join room.')
     }
+
+    setSubmitting(false)
   }
 
   async function shareRoom() {
@@ -93,7 +103,7 @@ function Room({
           <div className="room-action-card">
             <h2>{copy.actions.createRoom}</h2>
             <p>{copy.room.createHelp}</p>
-            <button className="primary-button" type="button" onClick={createRoom}>
+            <button className="primary-button" type="button" onClick={createRoom} disabled={submitting}>
               {copy.actions.createRoom}
             </button>
           </div>
@@ -110,7 +120,7 @@ function Room({
                 autoCapitalize="characters"
               />
             </label>
-            <button className="secondary-button" type="submit">
+            <button className="secondary-button" type="submit" disabled={submitting}>
               {copy.actions.joinRoom}
             </button>
           </div>

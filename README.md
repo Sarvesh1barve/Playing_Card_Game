@@ -1,8 +1,8 @@
 # Maharashtra Cards Hub
 
-Maharashtra Cards Hub / महाराष्ट्र कार्ड्स हब is a frontend-only React + Vite + PWA for private family and friends playing-card rooms.
+Maharashtra Cards Hub / महाराष्ट्र कार्ड्स हब is a React + Vite + PWA for private family and friends playing-card rooms.
 
-This phase is intentionally static and deployable. It uses React state, hash-based navigation, clean invite routes, plain CSS, localStorage, a PWA manifest, install icons, and a lightweight service worker. It does not include Supabase, Firebase, payments, wallets, gambling, betting, or real WebRTC yet.
+The app still works fully in frontend-only local mode with localStorage. Phase 4 adds an optional Supabase Realtime foundation for rooms, lobby membership, ready status, chat messages, and presence when real Supabase environment variables are provided. It does not include Firebase, payments, wallets, gambling, betting, authentication, real game dealing logic, or real WebRTC yet.
 
 ## Local Run
 
@@ -50,6 +50,54 @@ The static output is generated in:
 dist
 ```
 
+## Local Mode And Supabase Mode
+
+The app chooses its data mode at runtime:
+
+- If `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are missing or still use placeholder values, the app stays in localStorage fallback mode.
+- If both values are real Supabase project values, create room, join room, lobby sync, ready status, chat, and presence use Supabase.
+- Device preferences such as language, theme, player name, profile, last room, achievements, and notifications still use localStorage.
+
+## Supabase Setup
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Create a local `.env` file:
+
+```bash
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
+```
+
+Replace those placeholder values only with keys from your Supabase project. Do not commit `.env`; it is already ignored by git.
+
+Run the initial SQL migration in Supabase:
+
+1. Open your Supabase project dashboard.
+2. Go to **SQL Editor**.
+3. Paste the contents of `supabase/migrations/001_initial_schema.sql`.
+4. Run the script.
+5. Confirm Realtime is enabled for `rooms`, `room_players`, `messages`, and `game_state`.
+
+The migration creates:
+
+- `players`
+- `rooms`
+- `room_settings`
+- `room_players`
+- `messages`
+- `game_state`
+- `room_events`
+- `achievements`
+- `player_achievements`
+- `game_results`
+
+Current RLS policies are permissive guest-mode policies so the frontend can work before authentication exists. Tighten these policies when Supabase Auth is added.
+
 ## Vercel Deployment
 
 Recommended Vercel settings:
@@ -66,6 +114,15 @@ Deployment options:
 3. Import the GitHub repository.
 4. Keep the Vite defaults, or confirm the settings above.
 5. Deploy.
+
+For Supabase-backed deployment, add these Vercel Environment Variables before deploying:
+
+```bash
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+```
+
+If those variables are not set, the deployed app remains in localStorage fallback mode.
 
 Most app navigation uses hash routes like `#/lobby` and `#/table`. Friend invite links also support clean paths like `/join/ABC123`; `vercel.json` rewrites those paths back to `index.html` for static deployment.
 
@@ -88,23 +145,23 @@ Most app navigation uses hash routes like `#/lobby` and `#/table`. Friend invite
 - Game guides for Rummy, Mendicot, 304, Challenge, Teen Patti, Call Break, 29, and Court Piece
 - Virtual green card table with avatar seats, sample deck, sample hand, scoreboard, turn indicator, reactions, chat, and video placeholders
 - Camera, mute, and leave-room UI controls without real camera access
+- Optional Supabase room creation, room joining, room membership, ready status, realtime chat, lobby synchronization, room updates, and presence
+- Supabase Broadcast hook for emoji reactions and future typing/video-signaling events
 
 ## Important Disclaimer
 
 This app is for private social play only. No real money or betting is supported.
 
-## Future Supabase Setup Notes
+## Future Supabase Notes
 
-Do not add Supabase until the frontend deployment is stable. When ready, the likely integration order is:
+Next backend phases should add:
 
-1. Add Supabase project and environment variables in Vercel.
-2. Add Supabase Auth for private family/friends sign-in.
-3. Add a friends database for profiles, friend invites, and blocked/private lists.
-4. Replace localStorage room data with Supabase tables.
-5. Add Supabase Presence for online player state.
-6. Add Supabase Realtime for rooms, player presence, chat sync, ready state, selected game, and game state sync.
-7. Add row-level security policies before inviting real users.
-8. Keep localStorage only for device preferences such as language, theme, and last used player name.
+1. Supabase Auth for private family/friends sign-in.
+2. Strong RLS policies tied to authenticated users and room membership.
+3. Friends database and invite permissions.
+4. Chat moderation and message delete/edit rules.
+5. Game state validation on the server side.
+6. Leaderboard and achievement writes from verified game results.
 
 ## Future WebRTC Notes
 

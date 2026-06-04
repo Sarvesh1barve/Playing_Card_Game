@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Card from './Card.jsx'
 import ChatPanel from './ChatPanel.jsx'
 import AvatarBadge from './AvatarBadge.jsx'
@@ -18,7 +18,18 @@ const reactions = ['👏', '😂', '🔥', '🙏', '😮']
 // TODO: STUN/TURN server
 // TODO: WebRTC Video
 // TODO: WebRTC Audio
-function GameTable({ copy, language, playerName, roomCode, roomData, selectedGame, onSendMessage, onLeave }) {
+function GameTable({
+  copy,
+  language,
+  playerName,
+  roomCode,
+  roomData,
+  selectedGame,
+  onSendMessage,
+  onLeave,
+  onReaction,
+  liveReaction,
+}) {
   const [cameraOn, setCameraOn] = useState(false)
   const [muted, setMuted] = useState(true)
   const [activeReaction, setActiveReaction] = useState('')
@@ -35,6 +46,12 @@ function GameTable({ copy, language, playerName, roomCode, roomData, selectedGam
     })),
   ].slice(0, 6)
   const currentTurn = seats[0]?.name || playerName || 'You'
+
+  useEffect(() => {
+    if (liveReaction?.reaction) {
+      setActiveReaction(liveReaction.reaction)
+    }
+  }, [liveReaction])
 
   return (
     <section className="table-layout">
@@ -90,7 +107,15 @@ function GameTable({ copy, language, playerName, roomCode, roomData, selectedGam
             </div>
             <div className="reaction-group" aria-label={copy.table.reactions}>
               {reactions.map((reaction) => (
-                <button className="reaction-button" key={reaction} type="button" onClick={() => setActiveReaction(reaction)}>
+                <button
+                  className="reaction-button"
+                  key={reaction}
+                  type="button"
+                  onClick={() => {
+                    setActiveReaction(reaction)
+                    onReaction?.(reaction)
+                  }}
+                >
                   {reaction}
                 </button>
               ))}

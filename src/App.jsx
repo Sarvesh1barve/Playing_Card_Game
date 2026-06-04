@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { games } from './data/games.js'
 import { translations } from './i18n/translations.js'
 import Header from './components/Header.jsx'
@@ -14,6 +14,19 @@ import Leaderboard from './components/Leaderboard.jsx'
 import Achievements from './components/Achievements.jsx'
 import { avatars } from './data/avatars.js'
 import { writeJson, readJson } from './utils/localStorage.js'
+import { isSupabaseReady } from './lib/supabase.js'
+import {
+  bootstrapPlayer,
+  createRemoteRoom,
+  fetchRoomById,
+  joinRemoteRoom,
+  leaveRemoteRoom,
+  sendChatMessage,
+  startRemoteGame,
+  updateReadyStatus,
+  updateRoomSelectedGame,
+} from './lib/supabase-services.js'
+import { useRoomRealtime } from './hooks/useRoomRealtime.js'
 
 const storageKeys = {
   playerName: 'mch_player_name',
@@ -239,6 +252,9 @@ function App() {
   const [notifications, setNotifications] = useState(() =>
     readJson(storageKeys.notifications, createInitialNotifications()),
   )
+  const [supabasePlayer, setSupabasePlayer] = useState(null)
+  const [supabaseError, setSupabaseError] = useState('')
+  const [liveReaction, setLiveReaction] = useState(null)
   const [roomCode, setRoomCode] = useState(
     () => normalizeRoomCode(initialRoute.roomCode || getStoredValue(storageKeys.lastRoom, '')),
   )
@@ -282,6 +298,31 @@ function App() {
   useEffect(() => {
     writeJson(storageKeys.notifications, notifications)
   }, [notifications])
+
+  useEffect(() => {
+    if (!isSupabaseReady) {
+      return undefined
+    }
+
+    let active = true
+
+    bootstrapPlayer(playerProfile)
+      .then((player) => {
+        if (active) {
+          setSupabasePlayer(player)
+          setSupabaseError('')
+        }
+      })
+      .catch((error) => {
+        if (active) {
+          setSupabaseError(error.message)
+        }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [playerProfile])
 
   useEffect(() => {
     if (playerName.trim()) {
@@ -340,12 +381,78 @@ function App() {
     }
   }
 
-  function handleEnterLobby(details) {
+  const handleRemoteRoomChange = useCallback((nextRoom) => {
+    if (!nextRoom) {
+      return
+    }
+
+    setRoomData(nextRoom)
+    setRoomCode(nextRoom.code)
+    setSelectedGameId(nextRoom.selectedGameId || games[0].id)
+    setSupabaseError('')
+  }, [])
+
+  const handleRemoteBroadcast = useCallback((event, payload) => {
+    if (event === 'emoji-reaction' && payload?.reaction) {
+      setLiveReaction({
+        id: `${Date.now()}-${payload.reaction}`,
+        reaction: payload.reaction,
+        playerName: payload.displayName || 'Player',
+      })
+    }
+  }, [])
+
+  const roomRealtime = useRoomRealtime({
+    enabled: isSupabaseReady && roomData?.source === 'supabase' && Boolean(supabasePlayer?.id),
+    room: roomData,
+    player: supabasePlayer,
+    playerProfile,
+    currentScreen: screen,
+    onRoomChange: handleRemoteRoomChange,
+    onBroadcast: handleRemoteBroadcast,
+  })
+
+  async function handleEnterLobby(details) {
     const cleanName = details.playerName.trim() || 'Guest'
     const cleanRoom = normalizeRoomCode(details.roomCode)
 
     if (!isValidRoomCode(cleanRoom)) {
       return { ok: false, message: 'Room code must be exactly 6 letters or numbers.' }
+    }
+
+    if (isSupabaseReady) {
+      try {
+        const nextProfile = { ...playerProfile, displayName: cleanName }
+        const result =
+          details.mode === 'create'
+            ? await createRemoteRoom({
+                code: cleanRoom,
+                playerProfile: nextProfile,
+                selectedGameId,
+              })
+            : await joinRemoteRoom({
+                code: cleanRoom,
+                playerProfile: nextProfile,
+              })
+
+        setSupabasePlayer(result.player)
+        setPlayerName(cleanName)
+        setRoomCode(cleanRoom)
+        setRoomData(result.room)
+        setSelectedGameId(result.room.selectedGameId || games[0].id)
+        localStorage.setItem(storageKeys.playerName, cleanName)
+        localStorage.setItem(storageKeys.lastRoom, cleanRoom)
+        addNotification({
+          icon: '👋',
+          title: details.mode === 'create' ? 'Room created' : 'Friend joined room',
+          message: `${cleanName} entered room ${cleanRoom}.`,
+        })
+        navigate('lobby', cleanRoom)
+        return { ok: true, room: result.room }
+      } catch (error) {
+        setSupabaseError(error.message)
+        return { ok: false, message: error.message || 'Supabase room action failed.' }
+      }
     }
 
     const existingRoom = rooms[cleanRoom]
@@ -424,15 +531,61 @@ function App() {
     writeStoredRooms(nextRooms)
   }
 
-  function handleGameChange(nextGameId) {
+  async function handleGameChange(nextGameId) {
     setSelectedGameId(nextGameId)
-    if (roomData) {
-      updateRoom({ ...roomData, selectedGameId: nextGameId })
+
+    if (!roomData) {
+      return
     }
+
+    if (roomData.source === 'supabase' && supabasePlayer?.id) {
+      try {
+        const nextRoom = await updateRoomSelectedGame({
+          roomId: roomData.id,
+          playerId: supabasePlayer.id,
+          gameId: nextGameId,
+        })
+        handleRemoteRoomChange(nextRoom)
+      } catch (error) {
+        setSupabaseError(error.message)
+        setSelectedGameId(roomData.selectedGameId || games[0].id)
+      }
+      return
+    }
+
+    updateRoom({ ...roomData, selectedGameId: nextGameId })
   }
 
-  function handleReadyChange() {
+  async function handleReadyChange() {
     if (!roomData) {
+      return
+    }
+
+    if (roomData.source === 'supabase' && supabasePlayer?.id) {
+      const localPlayer = roomData.players.find((player) => player.playerId === supabasePlayer.id)
+      const nextReady = !localPlayer?.ready
+
+      setRoomData((current) =>
+        current?.id === roomData.id
+          ? {
+              ...current,
+              players: current.players.map((player) =>
+                player.playerId === supabasePlayer.id ? { ...player, ready: nextReady } : player,
+              ),
+            }
+          : current,
+      )
+
+      try {
+        const nextRoom = await updateReadyStatus({
+          roomId: roomData.id,
+          playerId: supabasePlayer.id,
+          ready: nextReady,
+        })
+        handleRemoteRoomChange(nextRoom)
+      } catch (error) {
+        setSupabaseError(error.message)
+      }
       return
     }
 
@@ -444,8 +597,33 @@ function App() {
     })
   }
 
-  function handleSendMessage(text) {
+  async function handleSendMessage(text) {
     if (!roomData || !text.trim()) {
+      return
+    }
+
+    if (roomData.source === 'supabase' && supabasePlayer?.id) {
+      try {
+        const message = await sendChatMessage({
+          roomId: roomData.id,
+          playerId: supabasePlayer.id,
+          body: text.trim(),
+          metadata: { avatar: playerProfile.avatar },
+        })
+
+        setRoomData((current) => {
+          if (current?.id !== roomData.id || current.messages.some((item) => item.id === message.id)) {
+            return current
+          }
+
+          return {
+            ...current,
+            messages: [...current.messages, message],
+          }
+        })
+      } catch (error) {
+        setSupabaseError(error.message)
+      }
       return
     }
 
@@ -484,7 +662,20 @@ function App() {
     })
   }
 
-  function handleStartGame() {
+  async function handleStartGame() {
+    if (roomData?.source === 'supabase' && supabasePlayer?.id) {
+      try {
+        const nextRoom = await startRemoteGame({
+          roomId: roomData.id,
+          playerId: supabasePlayer.id,
+        })
+        handleRemoteRoomChange(nextRoom)
+      } catch (error) {
+        setSupabaseError(error.message)
+        return
+      }
+    }
+
     addNotification({
       icon: '🎴',
       title: 'Game started',
@@ -493,13 +684,54 @@ function App() {
     navigate('table')
   }
 
+  async function handleLeaveRoom() {
+    if (roomData?.source === 'supabase' && supabasePlayer?.id) {
+      try {
+        await leaveRemoteRoom({
+          roomId: roomData.id,
+          playerId: supabasePlayer.id,
+        })
+      } catch (error) {
+        setSupabaseError(error.message)
+      }
+
+      setRoomData(null)
+      navigate('room')
+      return
+    }
+
+    navigate('lobby')
+  }
+
+  function handleReaction(reaction) {
+    setLiveReaction({
+      id: `${Date.now()}-${reaction}`,
+      reaction,
+      playerName: playerProfile.displayName,
+    })
+
+    roomRealtime.sendBroadcast('emoji-reaction', {
+      reaction,
+      playerId: supabasePlayer?.id || 'local',
+      displayName: playerProfile.displayName,
+    })
+  }
+
   function handleSaveProfile(nextProfile) {
     const savedProfile = { ...nextProfile, id: nextProfile.id || playerProfile.id }
     setPlayerProfile(savedProfile)
     setPlayerName(savedProfile.displayName)
     setLanguage(savedProfile.preferredLanguage)
 
-    if (roomData) {
+    if (roomData?.source === 'supabase' && supabasePlayer?.id) {
+      bootstrapPlayer(savedProfile)
+        .then((player) => {
+          setSupabasePlayer(player)
+          return fetchRoomById(roomData.id, player.id)
+        })
+        .then(handleRemoteRoomChange)
+        .catch((error) => setSupabaseError(error.message))
+    } else if (roomData) {
       updateRoom({
         ...roomData,
         players: roomData.players.map((player) =>
@@ -582,6 +814,7 @@ function App() {
             onInviteCopied={handleInviteCopied}
           />
         )}
+        {isSupabaseReady && supabaseError && <p className="form-status">{supabaseError}</p>}
         {screen === 'lobby' && (
           <Lobby
             copy={copy}
@@ -608,7 +841,9 @@ function App() {
             roomData={roomData}
             selectedGame={selectedGame}
             onSendMessage={handleSendMessage}
-            onLeave={() => navigate('lobby')}
+            onLeave={handleLeaveRoom}
+            onReaction={handleReaction}
+            liveReaction={liveReaction}
           />
         )}
         {screen === 'install' && <InstallGuide copy={copy} />}
